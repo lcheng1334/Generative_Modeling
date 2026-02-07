@@ -1,0 +1,173 @@
+# 电感基础配置文件
+# Inductor Base Configuration
+
+# ===== 项目信息 =====
+project_name: "Inductor Defect Synthesis"
+experiment_name: "inductor_base_exp"
+version: "0.1.0"
+
+# ===== 数据路径 =====
+data:
+  root_dir: "E:/code/Generative_Modeling/data"
+  samples_dir: "${data.root_dir}/samples/inductor"
+  processed_dir: "${data.root_dir}/processed/inductor"
+  generated_dir: "${data.root_dir}/generated/inductor"
+  num_views: 6
+  view_names: ["正面", "底面", "前侧面", "后侧面", "左侧面", "右侧面"]
+  image_format: "bmp"  # 原始格式
+  target_format: "png"  # 转换后
+  image_size: [640, 480]
+
+# ===== 几何参数 (工字型电感) =====
+geometry:
+  type: "inductor_h_shape"
+  params:
+    top_width: 1.0
+    bottom_width: 0.8
+    middle_height: 0.6
+    silver_ratio: 0.3
+  # UV展开布局
+  uv_layout:
+    resolution: [1024, 1024]
+    regions:
+      front: [256, 0, 512, 512]      # [x, y, w, h]
+      bottom: [256, 512, 512, 512]
+      left: [0, 0, 256, 512]
+      right: [512, 0, 256, 512]
+      top: [0, 512, 256, 512]
+      back: [512, 512, 256, 512]
+
+# ===== 相机参数 =====
+camera:
+  intrinsics:
+    # 初始估计值，会通过自标定优化
+    focal_length: [800.0, 800.0]  # [fx, fy]
+    principal_point: [320.0, 240.0]  # [cx, cy]
+  extrinsics:
+    # 6个视角的相机位置（世界坐标系）
+    # 这些是初始值，会被优化
+    view_positions:
+      - [0, 0, -5]    # 正面
+      - [0, 0, 5]     # 底面
+      - [-5, 0, 0]    # 左侧
+      - [5, 0, 0]     # 右侧
+      - [0, 5, 0]     # 上侧
+      - [0, -5, 0]    # 下侧
+  calibration:
+    enable_auto_calib: true
+    max_iterations: 100
+    convergence_threshold: 1e-4
+
+# ===== 生成网络 =====
+generator:
+  model_type: "controlnet"
+  base_model: "runwayml/stable-diffusion-v1-5"
+  controlnet_model: "lllyasviel/control_v11p_sd15_canny"
+  
+  # 输入通道
+  input_channels: 3  # RGB
+  condition_channels: 2  # UV coordinates
+  
+  # 输出通道
+  output_channels: 4  # RGB (3) + Height (1)
+  
+  # 训练参数
+  training:
+    batch_size: 4
+    learning_rate: 1e-5
+    num_epochs: 50
+    gradient_accumulation_steps: 4
+    mixed_precision: "fp16"
+    
+  # 损失函数权重
+  loss_weights:
+    reconstruction: 1.0
+    perceptual: 0.1
+    edge_consistency: 0.5
+    adversarial: 0.01
+
+# ===== 重光照参数 =====
+rendering:
+  light_type: "point"
+  light_params:
+    position: [0, 10, -5]  # 顶部偏前光源
+    intensity: 1.0
+    color: [1.0, 1.0, 1.0]
+  
+  # 材质参数
+  materials:
+    silver_region:  # 镀银区域
+      ka: 0.2  # 环境光系数
+      kd: 0.5  # 漫反射系数
+      ks: 0.8  # 镜面反射系数
+      shininess: 64.0
+    body_region:  # 蓝色本体
+      ka: 0.3
+      kd: 0.6
+      ks: 0.2
+      shininess: 16.0
+  
+  # 高度图缩放
+  height_scale: 0.1  # 高度图值乘以此系数得到实际深度(mm)
+
+# ===== 缺陷类型 =====
+defects:
+  types:
+    - name: "破损"
+      probability: 0.15
+      locations: [1, 2, 3, 4, 5, 6]  # 所有面
+      height_range: [-0.5, -0.1]  # 凹陷
+    - name: "混料"
+      probability: 0.1
+      locations: [1, 2, 3, 4, 5, 6]
+    - name: "印斜"
+      probability: 0.1
+      locations: [1]  # 仅正面
+    - name: "镀银超标"
+      probability: 0.15
+      locations: [2, 3, 4, 6]  # 侧面和底面
+    - name: "露本体"
+      probability: 0.1
+      locations: [1]
+      height_range: [-0.8, -0.3]  # 深度凹陷
+    - name: "扩散"
+      probability: 0.15
+      locations: [1]
+    - name: "底面粘银"
+      probability: 0.1
+      locations: [5]
+      height_range: [0.1, 0.3]  # 微凸起
+    - name: "麻点"
+      probability: 0.1
+      locations: [1, 5]
+    - name: "划痕"
+      probability: 0.05
+      locations: [1, 5]
+      height_range: [-0.2, -0.05]
+
+# ===== 验证参数 =====
+validation:
+  metrics:
+    - "fid"
+    - "lpips"
+    - "geometric_consistency"
+    - "yolo_map"
+  
+  yolo:
+    model: "yolov8n"
+    img_size: 640
+    conf_threshold: 0.25
+    iou_threshold: 0.45
+
+# ===== 输出配置 =====
+output:
+  save_uv_map: true
+  save_height_map: true
+  save_normal_map: true
+  save_rendered_views: true
+  visualization: true
+  
+# ===== 设备配置 =====
+device: "cuda"  # 或 "cpu"
+num_workers: 4
+seed: 42

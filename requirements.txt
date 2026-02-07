@@ -1,0 +1,77 @@
+# ===== 基于2.5D参数化几何的工业元器件缺陷生成系统 =====
+# 项目依赖包清单
+# 使用方法: pip install -r requirements.txt
+
+# ===== 核心深度学习框架 =====
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# ===== 3D渲染与几何处理 =====
+# PyTorch3D需要从源码安装或使用conda
+# conda install pytorch3d -c pytorch3d
+# 或者: pip install "git+https://github.com/facebookresearch/pytorch3d.git"
+# pytorch3d>=0.7.4
+
+# ===== 计算机视觉库 =====
+opencv-python>=4.8.0
+opencv-contrib-python>=4.8.0
+kornia>=0.7.0
+scikit-image>=0.21.0
+albumentations>=1.3.0
+
+# ===== 图像处理 =====
+Pillow>=10.0.0
+imageio>=2.31.0
+imageio-ffmpeg>=0.4.9
+
+# ===== 生成模型 (Stable Diffusion / ControlNet) =====
+diffusers>=0.24.0
+transformers>=4.35.0
+accelerate>=0.24.0
+safetensors>=0.4.0
+omegaconf>=2.3.0
+
+# ===== 数据处理与增强 =====
+numpy>=1.24.0
+scipy>=1.11.0
+pandas>=2.0.0
+
+# ===== 可视化 =====
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+tensorboard>=2.14.0
+
+# ===== 进度条与日志 =====
+tqdm>=4.66.0
+loguru>=0.7.0
+rich>=13.6.0
+
+# ===== 配置管理 =====
+pyyaml>=6.0
+hydra-core>=1.3.0
+
+# ===== 性能优化 =====
+einops>=0.7.0
+ninja>=1.11.0
+
+# ===== YOLO检测（验证用） =====
+ultralytics>=8.0.0
+
+# ===== 相机标定与SfM（可选） =====
+# COLMAP需要单独安装，这里提供Python接口
+pycolmap>=0.4.0
+
+# ===== 其他工具 =====
+trimesh>=4.0.0  # 3D mesh处理
+plyfile>=1.0.0  # PLY文件读写
+h5py>=3.9.0  # HDF5数据存储
+wandb>=0.16.0  # 实验跟踪（可选）
+
+# ===== 开发工具 =====
+jupyter>=1.0.0
+ipywidgets>=8.1.0
+black>=23.0.0  # 代码格式化
+flake8>=6.1.0  # 代码检查
+pytest>=7.4.0  # 单元测试

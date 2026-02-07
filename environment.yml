@@ -1,0 +1,64 @@
+name: Generate
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pip>=23.0
+  
+  # CUDA支持（根据实际GPU选择）
+  - pytorch::pytorch>=2.0.0
+  - pytorch::torchvision>=0.15.0
+  - pytorch::torchaudio>=2.0.0
+  - pytorch::pytorch-cuda=11.8  # 或 12.1，根据CUDA版本
+  
+  # PyTorch3D（通过conda安装更稳定）
+  - pytorch3d::pytorch3d>=0.7.4
+  
+  # 基础科学计算
+  - numpy>=1.24.0
+  - scipy>=1.11.0
+  - pandas>=2.0.0
+  
+  # 可视化
+  - matplotlib>=3.7.0
+  - seaborn>=0.12.0
+  
+  # Jupyter
+  - jupyter>=1.0.0
+  - ipykernel>=6.25.0
+  
+  # 通过pip安装的包
+  - pip:
+    - opencv-python>=4.8.0
+    - opencv-contrib-python>=4.8.0
+    - kornia>=0.7.0
+    - scikit-image>=0.21.0
+    - albumentations>=1.3.0
+    - Pillow>=10.0.0
+    - imageio>=2.31.0
+    - imageio-ffmpeg>=0.4.9
+    - diffusers>=0.24.0
+    - transformers>=4.35.0
+    - accelerate>=0.24.0
+    - safetensors>=0.4.0
+    - omegaconf>=2.3.0
+    - tqdm>=4.66.0
+    - loguru>=0.7.0
+    - rich>=13.6.0
+    - pyyaml>=6.0
+    - hydra-core>=1.3.0
+    - einops>=0.7.0
+    - ultralytics>=8.0.0
+    - trimesh>=4.0.0
+    - plyfile>=1.0.0
+    - h5py>=3.9.0
+    - wandb>=0.16.0
+    - tensorboard>=2.14.0
+    - plotly>=5.17.0
+    - black>=23.0.0
+    - flake8>=6.1.0
+    - pytest>=7.4.0
