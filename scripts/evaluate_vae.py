@@ -137,6 +137,8 @@ class VAEEvaluator:
         with torch.no_grad():
             output = vae(image)
             recon = output[0]  # [recon, input, mu, logvar]
+            recon = (recon + 1) / 2  # VAE uses Tanh: [-1,1] -> [0,1]
+            recon = torch.clamp(recon, 0, 1)
         
         # Compute metrics
         metrics = {
@@ -256,6 +258,8 @@ class VAEEvaluator:
                     with torch.no_grad():
                         output = vae(img_tensor)
                         recon = output[0]
+                        recon = (recon + 1) / 2  # VAE uses Tanh: [-1,1] -> [0,1]
+                        recon = torch.clamp(recon, 0, 1)
                     
                     # Save comparison
                     orig = img_tensor[0].cpu().numpy().transpose(1, 2, 0)
