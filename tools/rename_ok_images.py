@@ -46,7 +46,7 @@ def rename_ok_images(ok_folder: str, dry_run: bool = True):
             
             # 构建新文件名
             # 1. 把"良品"替换成"OK"
-            new_name = old_name.replace("良品", "OK")
+            new_name = old_name.replace("不良", "NG")
             # 2. 删除"正面"
             new_name = new_name.replace("正面", "")
             
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--execute", action="store_true", 
                         help="实际执行重命名（默认只预览）")
     parser.add_argument("--folder", type=str, 
-                        default=r"E:\code\Generative_Modeling\data\datasets\OK",
+                        default=r"E:\code\dataset\Generative_Modeling\data\datasets\NG",
                         help="OK文件夹路径")
     
     args = parser.parse_args()
