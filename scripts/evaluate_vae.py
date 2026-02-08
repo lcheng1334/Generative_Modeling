@@ -68,7 +68,7 @@ class VAEEvaluator:
         else:
             self.lpips_model = None
     
-    def _load_vaes(self, checkpoint_dir: str) -> Dict[str, VAE]:
+    def _load_vaes(self, checkpoint_dir: str) -> Dict[str, VanillaVAE]:
         """Load VAE models for each camera"""
         vaes = {}
         checkpoint_path = Path(checkpoint_dir)
@@ -80,9 +80,8 @@ class VAEEvaluator:
             if ckpt_path.exists():
                 vae = VanillaVAE(
                     in_channels=3,
-                    latent_dim=256,
-                    hidden_dims=[32, 64, 128, 256],
-                    image_size=self.image_size
+                    latent_dim=256
+                    # Use default hidden_dims=[32, 64, 128, 256, 512]
                 )
                 state_dict = torch.load(ckpt_path, map_location=self.device)
                 vae.load_state_dict(state_dict)
@@ -136,7 +135,8 @@ class VAEEvaluator:
             image = image.unsqueeze(0)
         
         with torch.no_grad():
-            recon, _, _ = vae(image)
+            output = vae(image)
+            recon = output[0]  # [recon, input, mu, logvar]
         
         # Compute metrics
         metrics = {
@@ -162,11 +162,21 @@ class VAEEvaluator:
         
         # Load dataset for each camera
         for cam_name in self.vaes.keys():
-            cam_dir = Path(data_dir) / 'Group1' / cam_name
-            if not cam_dir.exists():
-                cam_dir = Path(data_dir) / cam_name
+            # Try different directory naming conventions
+            possible_dirs = [
+                Path(data_dir) / 'Group1' / f'{cam_name}_Group1',  # e.g., Group1/Cam1_Group1
+                Path(data_dir) / 'Group1' / cam_name,              # e.g., Group1/Cam1
+                Path(data_dir) / f'{cam_name}_Group1',             # e.g., Cam1_Group1
+                Path(data_dir) / cam_name,                         # e.g., Cam1
+            ]
             
-            if not cam_dir.exists():
+            cam_dir = None
+            for possible_dir in possible_dirs:
+                if possible_dir.exists():
+                    cam_dir = possible_dir
+                    break
+            
+            if cam_dir is None:
                 print(f"  Warning: Directory not found for {cam_name}")
                 continue
             
@@ -214,11 +224,21 @@ class VAEEvaluator:
         output_path.mkdir(parents=True, exist_ok=True)
         
         for cam_name in self.vaes.keys():
-            cam_dir = Path(data_dir) / 'Group1' / cam_name
-            if not cam_dir.exists():
-                cam_dir = Path(data_dir) / cam_name
+            # Try different directory naming conventions
+            possible_dirs = [
+                Path(data_dir) / 'Group1' / f'{cam_name}_Group1',
+                Path(data_dir) / 'Group1' / cam_name,
+                Path(data_dir) / f'{cam_name}_Group1',
+                Path(data_dir) / cam_name,
+            ]
             
-            if not cam_dir.exists():
+            cam_dir = None
+            for possible_dir in possible_dirs:
+                if possible_dir.exists():
+                    cam_dir = possible_dir
+                    break
+            
+            if cam_dir is None:
                 continue
             
             images = sorted(list(cam_dir.glob('*.png')))[:num_samples]
@@ -234,7 +254,8 @@ class VAEEvaluator:
                     # Reconstruct
                     vae = self.vaes[cam_name]
                     with torch.no_grad():
-                        recon, _, _ = vae(img_tensor)
+                        output = vae(img_tensor)
+                        recon = output[0]
                     
                     # Save comparison
                     orig = img_tensor[0].cpu().numpy().transpose(1, 2, 0)
