@@ -28,7 +28,7 @@ from tqdm import tqdm
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.models.vae import VAE
+from src.models.vae import VanillaVAE
 from src.datasets.multiview_dataset import MultiViewDataset
 from torch.utils.data import DataLoader
 
@@ -78,7 +78,7 @@ class VAEEvaluator:
             ckpt_path = checkpoint_path / cam_name / 'best_vae.pth'
             
             if ckpt_path.exists():
-                vae = VAE(
+                vae = VanillaVAE(
                     in_channels=3,
                     latent_dim=256,
                     hidden_dims=[32, 64, 128, 256],

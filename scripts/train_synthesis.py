@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.datasets.multiview_dataset import MultiViewDataset
 from src.core.generator.defect_injector import DefectInjector
 from src.models.consistency_loss import CrossViewConsistencyLoss, MultiViewSynthesisLoss
-from src.models.vae import VAE
+from src.models.vae import VanillaVAE
 
 
 class MultiViewDefectSynthesizer:
@@ -106,7 +106,7 @@ class MultiViewDefectSynthesizer:
             ckpt_path = cam_dir / 'best_vae.pth'
             
             if ckpt_path.exists():
-                vae = VAE(
+                vae = VanillaVAE(
                     in_channels=3,
                     latent_dim=256,
                     hidden_dims=[32, 64, 128, 256],
