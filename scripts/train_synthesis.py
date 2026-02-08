@@ -497,10 +497,9 @@ def main():
     
     # Create dataset
     dataset = MultiViewDataset(
-        data_dir=args.data_dir,
+        root_dir=args.data_dir,
         group='Group1',  # Use Group1 by default
-        image_size=args.image_size,
-        normalize=True
+        image_size=(args.image_size, args.image_size)
     )
     
     dataloader = DataLoader(
