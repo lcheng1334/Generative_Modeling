@@ -1,58 +1,33 @@
-# 忽略Python缓存和编译文件
+# Data (不上传数据集和图片)
+/data/
+*.png
+*.jpg
+*.bmp
+
+# Checkpoints & outputs
+checkpoints/
+outputs/
+logs/
+
+# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
 
-# 虚拟环境
-venv/
-env/
-ENV/
-.venv
-
-# IDE配置
-.vscode/
+# IDE
 .idea/
+.vscode/
 *.swp
 *.swo
-*~
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
-
-# 数据文件（太大，不上传）
-data/
-data/raw/
-data/processed/
-data/datasets/
-data/generated/
-
-# 模型权重
-checkpoints/
-*.pth
-*.pt
-*.ckpt
-
-# 日志和Tensorboard
-logs/
-*.log
-events.out.*
-
-# 实验结果和输出
-experiments/
-runs/
-outputs/
-
-# 系统文件
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Wandb
-wandb/
-
-# 临时文件
-*.tmp
-*.bak
-temp/
-tmp/
+# Misc
+*.pdf

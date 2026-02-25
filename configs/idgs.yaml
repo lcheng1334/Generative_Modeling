@@ -1,0 +1,76 @@
+# IDGS Configuration
+# Industrial Defect Generation System
+
+# ── 数据 ────────────────────────────────────────
+data:
+  root: "/mnt/sda/lc/dataset/NR_datasets/datasets"   # 服务器数据集路径
+  image_size: 256
+  num_workers: 8
+
+# ── 模型 ────────────────────────────────────────
+model:
+  sd_model_id: "runwayml/stable-diffusion-v1-5"   # HuggingFace model ID
+  lora_rank: 8
+  lora_alpha: 32
+  lora_dropout: 0.1
+  lora_target_modules:             # LoRA 注入的目标模块
+    - "to_q"
+    - "to_k"
+    - "to_v"
+    - "to_out.0"
+
+# ── 训练 ────────────────────────────────────────
+train:
+  phase1:                          # SD LoRA 微调
+    epochs: 100
+    batch_size: 4                  # 每卡 batch size
+    learning_rate: 1.0e-4
+    lr_scheduler: "cosine"
+    warmup_steps: 500
+    mixed_precision: "fp16"        # 在 3090 上开 fp16
+    gradient_accumulation: 2
+    save_every_n_epochs: 10
+    max_grad_norm: 1.0
+
+  phase2:                          # DVCP 联合训练
+    epochs: 50
+    batch_size: 4
+    learning_rate: 5.0e-5
+    dvcp_loss_weight: 0.5          # DVCP 对比损失权重
+    mixed_precision: "fp16"
+    gradient_accumulation: 2
+    save_every_n_epochs: 10
+
+# ── 少样本设置 ───────────────────────────────────
+few_shot:
+  max_per_class: null              # null = 全量；设置数字如 50 则进入少样本模式
+
+# ── 输出 ────────────────────────────────────────
+output:
+  checkpoint_dir: "./checkpoints/idgs"
+  log_dir: "./logs/idgs"
+  sample_dir: "./outputs/samples"
+
+# ── 缺陷类别 ────────────────────────────────────
+defect_types:
+  - adhesion
+  - breakage
+  - contamination
+  - diffusion
+  - exposed_substrate
+  - reversed_print
+  - silver_overflow
+
+cam_ids: [1, 2, 3, 4, 5, 6]
+poses: [p0, p90]
+
+# ── DVCP 矩阵 (defect x cam)  1=合法 ────────────
+# 行顺序与 defect_types 一致，列顺序 cam1-cam6
+dvcp_matrix:
+  - [1, 0, 1, 0, 0, 0]   # adhesion
+  - [1, 1, 0, 0, 0, 0]   # breakage
+  - [1, 1, 0, 0, 0, 0]   # contamination
+  - [1, 0, 0, 0, 0, 0]   # diffusion
+  - [1, 0, 0, 0, 0, 0]   # exposed_substrate
+  - [0, 1, 0, 0, 0, 0]   # reversed_print
+  - [0, 0, 1, 1, 1, 1]   # silver_overflow
