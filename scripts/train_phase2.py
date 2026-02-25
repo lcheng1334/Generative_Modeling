@@ -160,6 +160,11 @@ def train(args):
 
     dvcp_loss_weight = train_cfg.get("dvcp_loss_weight", 0.5)
 
+    # ── 获取 unwrapped 模块引用 (DDP 兼容) ──
+    _san = accelerator.unwrap_model(san_wrapper)
+    _dvcp = accelerator.unwrap_model(dvcp_module)
+    _dvcp_cond = accelerator.unwrap_model(dvcp_cond)
+
     # ── 训练循环 ──
     logger.info("Starting Phase 2 training (DVCP + SAN joint)...")
 
@@ -186,7 +191,7 @@ def train(args):
                 latents = latents * vae.config.scaling_factor
 
                 # ── SAN 对 latent 做工位自适应归一化 ──
-                latents_san = san_wrapper.apply_san(latents.float(), cam_idx)
+                latents_san = _san.apply_san(latents.float(), cam_idx)
 
                 # ── 加噪 ──
                 noise = torch.randn_like(latents_san)
@@ -208,7 +213,7 @@ def train(args):
                     safe_defect_idx = defect_idx.clone()
                     safe_defect_idx[~ng_mask] = 0
 
-                    dvcp_emb = dvcp_cond(cam_idx, safe_defect_idx, pose_idx)  # (B, 1, 768)
+                    dvcp_emb = _dvcp_cond(cam_idx, safe_defect_idx, pose_idx)  # (B, 1, 768)
 
                     # NG 样本: text_emb + dvcp_emb；OK 样本: 仅 text_emb
                     dvcp_emb_masked = dvcp_emb * ng_mask.float().unsqueeze(-1).unsqueeze(-1)
@@ -230,7 +235,7 @@ def train(args):
 
                 # ── Loss 1: 去噪 MSE (对 NG 样本使用 DVCP 加权) ──
                 if ng_mask.any():
-                    denoise_loss = dvcp_module.generation_penalty(
+                    denoise_loss = _dvcp.generation_penalty(
                         safe_defect_idx, cam_idx,
                         noise_pred.float(), noise.float()
                     )
@@ -241,7 +246,7 @@ def train(args):
                 if ng_mask.any():
                     ng_defect = defect_idx[ng_mask]
                     ng_cam    = cam_idx[ng_mask]
-                    dvcp_loss = dvcp_module.dvcp_loss(ng_defect, ng_cam)
+                    dvcp_loss = _dvcp.dvcp_loss(ng_defect, ng_cam)
                 else:
                     dvcp_loss = torch.tensor(0.0, device=accelerator.device)
 
