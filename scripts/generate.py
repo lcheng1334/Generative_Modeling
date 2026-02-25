@@ -177,9 +177,8 @@ def generate(args):
                     device=device, dtype=dtype
                 )
 
-                # SAN 对初始 latent 做工位自适应归一化
-                cam_t = torch.tensor([c_idx], device=device)
-                latents = san.apply_san(latents.float(), cam_t).to(dtype=dtype)
+                # NOTE: SAN 是训练时对 VAE latent 的归一化，推理时初始噪声不需要
+                # SAN 的效果已经融入了 LoRA 权重中
 
                 for t in scheduler.timesteps:
                     noise_pred = unet(
