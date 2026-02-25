@@ -164,11 +164,10 @@ def generate(args):
                     sev_val = torch.rand(1, device=device) * 0.8 + 0.1
                 sev_emb = sev_enc(sev_val).to(dtype=dtype)  # (1, 1, 768)
 
-                # ── 合并条件 ──
+                # ── 合并条件 (和 train_phase2 保持一致: text + dvcp) ──
                 encoder_hidden_states = torch.cat([
                     text_emb.to(dtype=dtype),
                     dvcp_emb.to(dtype=dtype),
-                    sev_emb,
                 ], dim=1)
 
                 # ── 去噪 ──
