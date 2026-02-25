@@ -254,7 +254,10 @@ class DefectDataset(Dataset):
 # 快速测试
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
-    DATA_ROOT = r"E:\code\dataset\Generative_Modeling\data\datasets"
+    import yaml
+    with open("configs/idgs.yaml") as f:
+        _cfg = yaml.safe_load(f)
+    DATA_ROOT = _cfg["data"]["root"]
 
     print("=" * 60)
     print("测试 NG Dataset")

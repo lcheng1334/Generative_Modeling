@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="24.11.1.0">
+<procedure name="main">
+<interface/>
+<body>
+<l>ImagePath := 'E:/code/dataset/Generative_Modeling/data/datasets/NG/demo'</l>
+<l>OutputPath := 'E:/code/dataset/Generative_Modeling/data/datasets/NG/p0'</l>
+<c></c>
+<c>* 如果目标文件夹不存在则创建</c>
+<l>file_exists(OutputPath, FolderExists)</l>
+<l>if (not FolderExists)</l>
+<l>    make_dir(OutputPath)</l>
+<l>endif</l>
+<c></c>
+<l>list_files(ImagePath, ['files','follow_links'], ImageFiles)</l>
+<l>tuple_regexp_select(ImageFiles, ['.*\\.(bmp|jpg|png|tif)$','ignore_case'], ImageFiles)</l>
+<l>tuple_length(ImageFiles, NumImages)</l>
+<c></c>
+<l>for Index := 0 to NumImages-1 by 1</l>
+<l>    read_image(Image, ImageFiles[Index])</l>
+<c>    </c>
+<l>    decompose3(Image, R, G, B)</l>
+<l>*     scale_image(R, ImageScaled, 2, -200)</l>
+<l>*     gauss_filter(ImageScaled, ImageGauss, 5)</l>
+<l>*     threshold(ImageGauss, Region, 60, 255)</l>
+<l>*     connection(Region, ConnectedRegions)</l>
+<l>*     select_shape_std(ConnectedRegions, SelectedRegions, 'max_area', 70)</l>
+<l>*     area_center(SelectedRegions, Area, Row, Column)</l>
+<c>    </c>
+<l>    scale_image (G, ImageScaled, 2, -100)</l>
+<l>    gauss_filter(ImageScaled, ImageGauss, 5)</l>
+<l>    threshold(ImageGauss, Region, 100, 255)    </l>
+<l>    connection(Region, ConnectedRegions)</l>
+<l>    select_shape_std(ConnectedRegions, SelectedRegions, 'max_area', 70)</l>
+<l>    area_center (SelectedRegions, Area, Row, Column)</l>
+<l>    dev_display (Image)</l>
+<l>    dev_display (SelectedRegions)</l>
+<c></c>
+<l>    if (Area &gt; 3000)</l>
+<c>        * 提取文件名</c>
+<l>        tuple_regexp_replace(ImageFiles[Index], '.*[/\\\\]', '', FileName)</l>
+<c>        </c>
+<c>        * 拼接目标路径</c>
+<l>        DestFile := OutputPath + '/' + FileName</l>
+<c>        </c>
+<c>        * 提取扩展名并写出图像</c>
+<l>        tuple_regexp_replace(FileName, '.*\\.', '', Ext)</l>
+<l>        write_image(Image, Ext, 0, DestFile)</l>
+<c>        </c>
+<c>        * 删除原文件（复制+删除 = 移动）</c>
+<l>        delete_file(ImageFiles[Index])</l>
+<l>    endif</l>
+<c>    </c>
+<l>endfor</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>

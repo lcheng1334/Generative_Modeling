@@ -1,14 +1,29 @@
 """
 dataset_stats.py - 私有电感 AOI 数据集完整统计
 输出: 每类缺陷 x 每工位 x 每姿态的样本数量表
+
+用法:
+  python tools/dataset_stats.py
+  python tools/dataset_stats.py --data_root /path/to/datasets
 """
 import sys
+import argparse
+
 sys.path.insert(0, ".")
 
+import yaml
 from collections import defaultdict
 from src.datasets.defect_dataset import DefectDataset, DEFECT_TYPES, CAM_IDS
 
-DATA_ROOT = r"E:\code\dataset\Generative_Modeling\data\datasets"
+
+def get_default_data_root():
+    """从 configs/idgs.yaml 读取默认数据路径"""
+    try:
+        with open("configs/idgs.yaml") as f:
+            cfg = yaml.safe_load(f)
+        return cfg["data"]["root"]
+    except Exception:
+        return "."
 
 
 def print_table(title, rows, headers):
@@ -27,24 +42,27 @@ def print_table(title, rows, headers):
 
 
 def main():
-    # ── NG 统计 ──────────────────────────────────────
-    ng_ds = DefectDataset(DATA_ROOT, mode="ng")
-    ok_ds = DefectDataset(DATA_ROOT, mode="ok")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_root", type=str, default=None,
+                        help="Dataset root dir (default: read from configs/idgs.yaml)")
+    args = parser.parse_args()
 
-    # 按 (defect, cam, pose) 统计
+    data_root = args.data_root or get_default_data_root()
+    print(f"Data root: {data_root}")
+
+    # NG
+    ng_ds = DefectDataset(data_root, mode="ng")
+    ok_ds = DefectDataset(data_root, mode="ok")
+
     ng_counter = defaultdict(int)
     for s in ng_ds.samples:
-        # s['defect'], cam, pose
-        import re
-        info = re.match(r".*/(.*?)/(.*?)/", s["path"].replace("\\", "/"))
         ng_counter[(s["defect"], s["cam"], s["pose"])] += 1
 
-    # 按 (cam, pose) 统计 OK
     ok_counter = defaultdict(int)
     for s in ok_ds.samples:
         ok_counter[(s["cam"], s["pose"])] += 1
 
-    # ── 打印 NG 缺陷明细表 ──────────────────────────
+    # NG summary
     rows = []
     grand_total = 0
     for defect in DEFECT_TYPES:
@@ -52,20 +70,15 @@ def main():
         p90 = sum(ng_counter[(defect, c, "p90")] for c in CAM_IDS)
         total = p0 + p90
         grand_total += total
-        # 有效工位
         valid_cams = sorted({c for c in CAM_IDS
                              if ng_counter[(defect, c, "p0")] + ng_counter[(defect, c, "p90")] > 0})
         cam_str = " ".join(f"Cam{c}" for c in valid_cams)
         rows.append([defect, cam_str, p0, p90, total])
 
-    print_table(
-        "NG Dataset Summary",
-        rows,
-        ["Defect", "Valid Cams", "p0", "p90", "Total"]
-    )
+    print_table("NG Dataset Summary", rows, ["Defect", "Valid Cams", "p0", "p90", "Total"])
     print(f"  Grand Total NG: {grand_total}")
 
-    # ── 打印 OK 明细表 ──────────────────────────────
+    # OK summary
     ok_rows = []
     ok_total = 0
     for cam in CAM_IDS:
@@ -74,14 +87,10 @@ def main():
         ok_rows.append([f"Cam{cam}", p0, p90, p0 + p90])
         ok_total += p0 + p90
 
-    print_table(
-        "OK Dataset Summary",
-        ok_rows,
-        ["Camera", "p0", "p90", "Total"]
-    )
+    print_table("OK Dataset Summary", ok_rows, ["Camera", "p0", "p90", "Total"])
     print(f"  Grand Total OK: {ok_total}")
 
-    # ── 每工位 NG 详细分布 ──────────────────────────
+    # Per-camera breakdown
     cam_rows = []
     for cam in CAM_IDS:
         for defect in DEFECT_TYPES:
@@ -90,12 +99,7 @@ def main():
             if p0 + p90 > 0:
                 cam_rows.append([f"Cam{cam}", defect, p0, p90, p0 + p90])
 
-    print_table(
-        "NG Per-Camera Breakdown",
-        cam_rows,
-        ["Camera", "Defect", "p0", "p90", "Total"]
-    )
-
+    print_table("NG Per-Camera Breakdown", cam_rows, ["Camera", "Defect", "p0", "p90", "Total"])
     print(f"\n[DONE] Total samples: {grand_total} NG + {ok_total} OK = {grand_total + ok_total}")
 
 
