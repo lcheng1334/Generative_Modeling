@@ -242,13 +242,8 @@ def train(args):
                 else:
                     denoise_loss = F.mse_loss(noise_pred.float(), noise.float())
 
-                # ── Loss 2: DVCP 兼容性学习 (仅 NG 样本) ──
-                if ng_mask.any():
-                    ng_defect = defect_idx[ng_mask]
-                    ng_cam    = cam_idx[ng_mask]
-                    dvcp_loss = _dvcp.dvcp_loss(ng_defect, ng_cam)
-                else:
-                    dvcp_loss = torch.tensor(0.0, device=accelerator.device)
+                # ── Loss 2: DVCP 兼容性学习 (遍历全部 42 个组合，每步都训练) ──
+                dvcp_loss = _dvcp.dvcp_loss()
 
                 # ── 总损失 ──
                 total_loss = denoise_loss + dvcp_loss_weight * dvcp_loss

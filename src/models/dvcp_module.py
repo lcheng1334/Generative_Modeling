@@ -100,21 +100,25 @@ class DVCPModule(nn.Module):
         """
         return self.dvcp_gt[defect_idx, cam_idx]
 
-    def dvcp_loss(self, defect_idx, cam_idx):
+    def dvcp_loss(self, defect_idx=None, cam_idx=None):
         """
         DVCP 兼容性预测损失 (BCE)
 
-        让模型学会预测哪些组合是物理合法的
-
-        Args:
-            defect_idx: (B,) LongTensor
-            cam_idx:    (B,) LongTensor
+        关键：遍历整个 7×6 矩阵的**所有组合**（包括不合法的），
+        否则模型只见到正样本会全输出 1。
 
         Returns:
             loss: scalar
         """
-        pred = self.predict_compatibility(defect_idx, cam_idx)
-        gt   = self.get_gt_compatibility(defect_idx, cam_idx)
+        device = self.defect_embed.weight.device
+
+        # 构造全部 42 个 (defect, cam) 组合
+        all_defects = torch.arange(NUM_DEFECTS, device=device).repeat_interleave(NUM_CAMS)  # (42,)
+        all_cams    = torch.arange(NUM_CAMS, device=device).repeat(NUM_DEFECTS)              # (42,)
+
+        pred = self.predict_compatibility(all_defects, all_cams)  # (42,)
+        gt   = self.dvcp_gt.reshape(-1).to(device)                # (42,)
+
         return F.binary_cross_entropy(pred, gt)
 
     def generation_penalty(self, defect_idx, cam_idx, noise_pred, noise_gt):
