@@ -9,7 +9,7 @@ data:
 
 # ── 模型 ────────────────────────────────────────
 model:
-  sd_model_id: "runwayml/stable-diffusion-v1-5"   # HuggingFace model ID
+  sd_model_id: "/mnt/sda/lc/models/sd-v1-5"   # 服务器本地路径
   lora_rank: 8
   lora_alpha: 32
   lora_dropout: 0.1
